@@ -1,0 +1,69 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(uuid())
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  email         String    @unique
+  hash          String
+  firstName     String    @map("first_name")
+  lastName      String    @map("last_name")
+  emailVerified Boolean   @map("email_verified")
+  libraries     Library[]
+
+  @@map("users")
+}
+
+model Library {
+  id          String   @id @default(uuid())
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  librarianId String   @map("librarian_id")
+
+  // not real field. Just tells prisma how to handle the relation
+  librarian User @relation(fields: [librarianId], references: [id])
+
+  @@map("libraries")
+}
+
+model Book {
+  id     String  @id @default(uuid())
+  title  String
+  author String
+  isbn String @unique
+  genres Genre[]
+  reviews Review[]
+
+  // at a later date, set up images for books
+
+  @@map("books")
+}
+
+model Genre {
+  id    String @id @default(uuid())
+  name  String @unique
+  books Book[]
+
+  @@map("genres")
+}
+
+model Review {
+  id String @id @default(uuid())
+  bookId String @map("book_id")
+  book Book @relation(fields: [bookId], references: [id])
+  title String
+  score Int
+  content String
+
+  @@map("reviews")
+}
