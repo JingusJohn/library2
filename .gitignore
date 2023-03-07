@@ -1,7 +1,9 @@
 # APP
 app/node_modules
 app/.env
+app/dist
 
 # API
 api/node_modules
 api/.env
+api/build
