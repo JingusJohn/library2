@@ -20,8 +20,28 @@ model User {
   lastName      String    @map("last_name")
   emailVerified Boolean   @map("email_verified")
   libraries     Library[]
+  sessions      Session[]
+
+  role Role @default(USER)
 
   @@map("users")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model Session {
+  id         String   @id
+  userId     String   @map("user_id")
+  // should be valid until some date after creation. Not sure how long yet
+  validUntil DateTime @map("valid_until")
+  userAgent  String   @map("user_agent")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("sessions")
 }
 
 model Library {
@@ -37,11 +57,11 @@ model Library {
 }
 
 model Book {
-  id     String  @id @default(uuid())
-  title  String
-  author String
-  isbn String @unique
-  genres Genre[]
+  id      String   @id @default(uuid())
+  title   String
+  author  String
+  isbn    String   @unique
+  genres  Genre[]
   reviews Review[]
 
   // at a later date, set up images for books
@@ -58,11 +78,11 @@ model Genre {
 }
 
 model Review {
-  id String @id @default(uuid())
-  bookId String @map("book_id")
-  book Book @relation(fields: [bookId], references: [id])
-  title String
-  score Int
+  id      String @id @default(uuid())
+  bookId  String @map("book_id")
+  book    Book   @relation(fields: [bookId], references: [id])
+  title   String
+  score   Int
   content String
 
   @@map("reviews")

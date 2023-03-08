@@ -14,6 +14,8 @@ let env: Environment = environmentSchema.parse(process.env);
 const app: Express = express();
 
 app.use("/", createExpressMiddleware({ router: appRouter }));
+// likely will add a second router here for admin only requests
+// app.use("/admin", createExpressMiddleware({ router: adminRouter }));
 
 app.listen(env.PORT, () => {{
   console.log(`API Server running at port: ${env.PORT}`);
