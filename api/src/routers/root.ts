@@ -3,7 +3,7 @@ import { authRouter } from "./auth/auth";
 
 export const appRouter = t.router({
   helloWorld: t.procedure.query(() => {
-    return "Hello, World";
+    return "Hello from tRPC!";
   }),
   auth: authRouter
 });
