@@ -4,12 +4,15 @@ import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { environmentSchema, Environment } from "./models/utilities";
 import { appRouter } from "./routers/root";
 import cors from "cors";
+import { PrismaClient } from "@prisma/client";
 
 dotenv.config();
 // load any environment variables from .env
 
 // validate .env configuration using zod
 let env: Environment = environmentSchema.parse(process.env);
+
+export const db = new PrismaClient();
 
 const app: Express = express();
 

@@ -16,9 +16,8 @@ model User {
   updatedAt     DateTime  @updatedAt @map("updated_at")
   email         String    @unique
   hash          String
-  firstName     String    @map("first_name")
-  lastName      String    @map("last_name")
-  emailVerified Boolean   @map("email_verified")
+  emailVerified Boolean   @default(false) @map("email_verified")
+  profile       Profile?
   libraries     Library[]
   sessions      Session[]
 
@@ -27,9 +26,31 @@ model User {
   @@map("users")
 }
 
+model Profile {
+  id        String @id @default(uuid())
+  userId    String @unique @map("user_id")
+  nickname  String @unique
+  firstName String @map("first_name")
+  lastName  String @map("last_name")
+  //profileTheme in the future
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("profiles")
+}
+
 enum Role {
   USER
   ADMIN
+}
+
+enum Language {
+  en
+  es
+  de
+  ja
+  cn
+  it
 }
 
 model Session {
@@ -46,6 +67,8 @@ model Session {
 
 model Library {
   id          String   @id @default(uuid())
+  name        String
+  description String
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
   librarianId String   @map("librarian_id")
@@ -57,13 +80,13 @@ model Library {
 }
 
 model Book {
-  id      String   @id @default(uuid())
-  title   String
-  author  String
-  isbn    String   @unique
-  genres  Genre[]
-  reviews Review[]
-
+  id       String   @id @default(uuid())
+  title    String
+  author   String
+  isbn     String   @unique
+  genres   Genre[]
+  reviews  Review[]
+  language Language
   // at a later date, set up images for books
 
   @@map("books")
