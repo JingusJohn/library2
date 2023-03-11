@@ -13,7 +13,6 @@ export const authRouter = t.router({
   }),
 
   signup: t.procedure.input(z.object({
-    username: z.string(),
     email: z.string().email(),
     password: z.string()
   })).mutation(async ({ input }) => {
@@ -26,6 +25,7 @@ export const authRouter = t.router({
       }
     });
     // User will not have a profile until they create one
+    return newUser;
   }),
 
   deleteUser: t.procedure.input(z.object({
