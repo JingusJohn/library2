@@ -37,6 +37,7 @@
 	},
 	"type": "module",
 	"dependencies": {
-		"@trpc/client": "^10.14.0"
+		"@trpc/client": "^10.14.0",
+		"zod": "^3.21.4"
 	}
 }
