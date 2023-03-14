@@ -1,17 +1,57 @@
 import { t } from "../../trpc";
-import  { z } from "zod";
+import { z } from "zod";
 import * as argon from "argon2";
 import { db } from "../..";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime";
 import { errorMap } from "../../utils/prismaUtils";
+import { User } from "@prisma/client";
+import { generateSessionId } from "../../utils/authUtils";
 
 export const authRouter = t.router({
-  // need to decide whether or not these passwords are hashed before sent to the api or not
+  getUsers: t.procedure.query(async () => {
+    return await db.user.findMany();
+  }),
+
   login: t.procedure.input(z.object({
     email: z.string().email(),
     password: z.string()
-  })).mutation(({ input }) => {
+  })).mutation(async ({ input }) => {
     // define some logic for logging in a user
+    try {
+      const user = await db.user.findUnique({
+        where: {
+          email: input.email
+        }
+      });
+
+      if (user) {
+        // if the user is found (email is valid)
+        if (await argon.verify(user.hash, input.password)) {
+          // if the password is correct
+          // create a new auth session
+          // const session = await db.session.create({
+          //   data: {
+          //     id: generateSessionId(),
+          //     userId: user.id,
+          //     validUntil: generateSessionExpiry() // add to utils
+          //     userAgent: // get from context
+          //   }
+          // })
+          return user;
+        } else {
+          return {
+            message: "incorrect password"
+          }
+        }
+      } else {
+        return {
+          message: "failed"
+        };
+      }
+
+    } catch (err) {
+      console.log(err);
+    }
   }),
 
   signup: t.procedure.input(z.object({
