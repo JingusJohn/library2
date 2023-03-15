@@ -8,14 +8,15 @@ import { User } from "@prisma/client";
 import { generateSessionId } from "../../utils/authUtils";
 
 export const authRouter = t.router({
-  getUsers: t.procedure.query(async () => {
+  getUsers: t.procedure.query(async (req) => {
+    console.log(req);
     return await db.user.findMany();
   }),
 
   login: t.procedure.input(z.object({
     email: z.string().email(),
     password: z.string()
-  })).mutation(async ({ input }) => {
+  })).mutation(async ({ input, ctx }) => {
     // define some logic for logging in a user
     try {
       const user = await db.user.findUnique({
@@ -64,7 +65,8 @@ export const authRouter = t.router({
       isPrismaError: z.boolean(),
       message: z.string()
     }).optional()
-  })).mutation(async ({ input }) => {
+  })).mutation(async ({ input, ctx }) => {
+    console.log(ctx);
     // define some logic for signing up a user
     const hash: string = await argon.hash(input.password);
     try {
