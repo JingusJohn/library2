@@ -2,32 +2,24 @@ import { client } from "$lib/trpc";
 import { fail, type Actions } from "@sveltejs/kit";
 import { z, ZodError } from "zod";
 
-const signupSchema = z.object({
+const loginSchema = z.object({
   email: z.string({ required_error: "Email is required" }).email({ message: "Email must be valid" }).min(1).trim(),
   password: z.string({ required_error: "Password is required" }).trim().min(8, { message: "Password must contain at least 8 characters" }),
-  confirmPassword: z.string({ required_error: "Must confirm password" }).trim().min(8, { message: "Password must contain at least 8 characters" })
-}).superRefine(({ password, confirmPassword }, ctx) => {
-  if (confirmPassword !== password) {
-    ctx.addIssue({
-      path: ['confirmPassword'],
-      code: "custom",
-      message: "Your passwords do not match"
-    });
-  }
+  rememberMe: z.boolean().default(false)
 });
 
 export const actions: Actions = {
-  signup: async ({ request, locals }) => {
+  login: async ({ request, locals }) => {
     const body = Object.fromEntries(await request.formData());
     console.log(request.headers.get("user-agent"));
 
     try {
-      signupSchema.parse(body);
+      loginSchema.parse(body);
     } catch(err) {
       if (err instanceof ZodError) {
         const { fieldErrors: errors } = err.flatten();
         console.log(errors);
-        const { password, confirmPassword, ...rest } = body;
+        const { password, ...rest } = body;
         // return inputs ignoring password
         return {
           data: rest,
@@ -41,18 +33,33 @@ export const actions: Actions = {
     }
 
     // inputs are valid, so create the account
-    const parsedBody = signupSchema.parse(body);
-    const { message, error: err } = await client.auth.signup.mutate(parsedBody);
-    console.log("message: ", message);
-    if (err) {
+    const parsedBody = loginSchema.parse(body);
+    const session = await client.auth.login.mutate(parsedBody);
+    console.log("message: ", session);
+    if (session.message !== "SUCCESS") {
       // handle errors
-      console.log(err)
-      let { password, confirmPassword, ...rest } = parsedBody
+      console.log(session.message)
+      let { password, ...rest } = parsedBody
+      let accountErr: string;
+      switch (session.message) {
+        case "INVALID": {
+          accountErr = "Invalid credentials"
+          break;
+        }
+        case "UNVERIFIED": {
+          accountErr = "Email is not verified. Check email for verification"
+          break;
+        }
+        case "INTERNAL": {
+          accountErr = "Unknown internal server error occured. Please try again or contact support."
+        }
+      }
       return {
         data: rest,
-        accountError: err.message
-      }
+        accountError: accountErr
+      };
+    } else {
+      // do something with the session
     }
-
   }
 };

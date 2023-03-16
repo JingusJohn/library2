@@ -9,7 +9,7 @@
 			<a class="text-blue-500 font-bold" href="/">My Libraries</a>
 		</div>
 		<div class="flex flex-row items-center space-x-8">
-			<a class="text-blue-500 font-bold" href="/">Login</a>
+			<a class="text-blue-500 font-bold" href="/login">Login</a>
 			<a class="text-blue-500 font-bold" href="/signup">Sign Up</a>
 		</div>
 	</div>

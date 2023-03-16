@@ -5,7 +5,7 @@ import { db } from "../..";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime";
 import { errorMap } from "../../utils/prismaUtils";
 import { User } from "@prisma/client";
-import { generateSessionId } from "../../utils/authUtils";
+import { generateSessionId, generateSessionExpiry } from "../../utils/authUtils";
 
 export const authRouter = t.router({
   getUsers: t.procedure.query(async (req) => {
@@ -15,8 +15,16 @@ export const authRouter = t.router({
 
   login: t.procedure.input(z.object({
     email: z.string().email(),
-    password: z.string()
-  })).mutation(async ({ input, ctx }) => {
+    password: z.string(),
+    rememberMe: z.boolean().default(false),
+    userAgent: z.string().default("unknown"),
+  })).output(z.object({
+    session: z.object({
+      id: z.string(),
+      validUntil: z.date(),
+    }).optional(),
+    message: z.enum(["SUCCESS", "UNVERIFIED", "INVALID", "INTERNAL"])
+  })).mutation(async ({ input }) => {
     // define some logic for logging in a user
     try {
       const user = await db.user.findUnique({
@@ -30,28 +38,33 @@ export const authRouter = t.router({
         if (await argon.verify(user.hash, input.password)) {
           // if the password is correct
           // create a new auth session
-          // const session = await db.session.create({
-          //   data: {
-          //     id: generateSessionId(),
-          //     userId: user.id,
-          //     validUntil: generateSessionExpiry() // add to utils
-          //     userAgent: // get from context
-          //   }
-          // })
-          return user;
+          const session = await db.session.create({
+            data: {
+              id: generateSessionId(),
+              userId: user.id,
+              validUntil: generateSessionExpiry(input.rememberMe), // add to utils
+              userAgent: input.userAgent
+            }
+          })
+          return {
+            session,
+            message: "SUCCESS"
+          };
         } else {
           return {
-            message: "incorrect password"
+            message: "INVALID"
           }
         }
       } else {
         return {
-          message: "failed"
+          message: "INVALID"
         };
       }
 
     } catch (err) {
-      console.log(err);
+      return {
+        message: "INTERNAL"
+      };
     }
   }),
 

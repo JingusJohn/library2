@@ -4,7 +4,7 @@
 	export let form: ActionData;
 </script>
 
-<form class="flex flex-col px-4 py-4" action="?/signup" method="POST">
+<form class="flex flex-col px-4 py-4" action="?/login" method="POST">
 
   {#if form?.accountError}
     <p class="text-red-500">{form.accountError}</p>
@@ -22,11 +22,8 @@
     <label for="password" class="text-red-500">{form.errors.password[0]}</label>
 	{/if}
 
-	<label for="confirmPassword">Confirm Password</label>
-	<input name="confirmPassword" class="border-black border-2" type="password" />
-	{#if form?.errors?.confirmPassword}
-    <label for="confirmPassword" class="text-red-500">{form.errors.confirmPassword[0]}</label>
-	{/if}
+  <label for="rememberMe">Remember Me</label>
+  <input type="checkbox" name="rememberMe" value={form?.data?.email ?? false} />
 
 	<button type="submit">Submit</button>
 
