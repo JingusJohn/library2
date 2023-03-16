@@ -5,12 +5,13 @@ import { z, ZodError } from "zod";
 const loginSchema = z.object({
   email: z.string({ required_error: "Email is required" }).email({ message: "Email must be valid" }).min(1).trim(),
   password: z.string({ required_error: "Password is required" }).trim().min(8, { message: "Password must contain at least 8 characters" }),
-  rememberMe: z.boolean().default(false)
+  rememberMe: z.coerce.boolean().default(false)
 });
 
 export const actions: Actions = {
   login: async ({ request, locals }) => {
     const body = Object.fromEntries(await request.formData());
+    console.log("body: ", body);
     console.log(request.headers.get("user-agent"));
 
     try {
@@ -34,7 +35,10 @@ export const actions: Actions = {
 
     // inputs are valid, so create the account
     const parsedBody = loginSchema.parse(body);
-    const session = await client.auth.login.mutate(parsedBody);
+    const session = await client.auth.login.mutate({
+      ...parsedBody,
+      userAgent: request.headers.get("user-agent") ?? "unknown"
+    });
     console.log("message: ", session);
     if (session.message !== "SUCCESS") {
       // handle errors
