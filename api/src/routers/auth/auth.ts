@@ -136,5 +136,47 @@ export const authRouter = t.router({
     // define some logic for signing up a user
   }),
 
+  getUserAuth: t.procedure.input(z.string()).output(z.object({
+    session: z.object({
+      sessionId: z.string(),
+      expiresAt: z.date()
+    }),
+    user: z.object({
+      email: z.string(),
+      role: z.string(),
+      verified: z.boolean()
+    })
+  })).query(async (req) => {
+    const session = await db.session.findUniqueOrThrow({
+      where: {
+        id: req.input
+      }
+    });
+    const updatedSession = await db.session.update({
+      where: {
+        id: req.input
+      },
+      data: {
+        validUntil: generateSessionExpiry(false, session.validUntil)
+      }
+    })
+    const user = await db.user.findUniqueOrThrow({
+      where: {
+        id: session.userId
+      }
+    });
+    return {
+      session: {
+        sessionId: session.id,
+        expiresAt: updatedSession.validUntil
+      },
+      user: {
+        email: user.email,
+        role: user.role,
+        verified: user.emailVerified
+      }
+    }
+  })
+
   // change password
 })

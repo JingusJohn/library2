@@ -9,7 +9,7 @@ const loginSchema = z.object({
 });
 
 export const actions: Actions = {
-  login: async ({ request, locals }) => {
+  login: async ({ request, locals, cookies }) => {
     const body = Object.fromEntries(await request.formData());
     console.log("body: ", body);
     console.log(request.headers.get("user-agent"));
@@ -40,9 +40,9 @@ export const actions: Actions = {
       userAgent: request.headers.get("user-agent") ?? "unknown"
     });
     console.log("message: ", session);
-    if (session.message !== "SUCCESS") {
+    if (!session.session) {
       // handle errors
-      console.log(session.message)
+      console.log("Error: ", session.message);
       let { password, ...rest } = parsedBody
       let accountErr: string;
       switch (session.message) {
@@ -56,6 +56,13 @@ export const actions: Actions = {
         }
         case "INTERNAL": {
           accountErr = "Unknown internal server error occured. Please try again or contact support."
+          break;
+        }
+        case "SUCCESS": {
+          // this case should never occur. Just written to please typescript. Will likely rewrite
+          console.log("Something has broken");
+          accountErr = "Something went wrong"
+          break
         }
       }
       return {
@@ -64,6 +71,10 @@ export const actions: Actions = {
       };
     } else {
       // do something with the session
+      cookies.set("sessionid", session.session.id, {
+        expires: new Date(session.session.validUntil)
+      });
+      // When deploying, need to set the cookie to secure! (https only)
     }
   }
 };
